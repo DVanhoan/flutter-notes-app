@@ -1,36 +1,34 @@
 import 'dart:async';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/painting.dart';
-import 'package:notes/components/faderoute.dart';
-import 'package:notes/data/models.dart';
-import 'package:notes/screens/edit.dart';
-import 'package:notes/screens/view.dart';
-import 'package:notes/services/database.dart';
-import 'settings.dart';
 import 'package:outline_material_icons/outline_material_icons.dart';
 import '../components/cards.dart';
+import '../components/faderoute.dart';
+import '../data/models.dart';
+import '../services/database.dart';
+import 'edit.dart';
+import 'settings.dart';
+import 'view.dart';
 
 class MyHomePage extends StatefulWidget {
-  Function(Brightness brightness) changeTheme;
-  MyHomePage({Key key, this.title, Function(Brightness brightness) changeTheme})
-      : super(key: key) {
-    this.changeTheme = changeTheme;
-  }
-
+  final Function(Brightness brightness) changeTheme;
   final String title;
 
+  const MyHomePage({
+    super.key,
+    required this.title,
+    required this.changeTheme,
+  });
+
   @override
-  _MyHomePageState createState() => _MyHomePageState();
+  State<MyHomePage> createState() => _MyHomePageState();
 }
 
 class _MyHomePageState extends State<MyHomePage> {
   bool isFlagOn = false;
   bool headerShouldHide = false;
   List<NotesModel> notesList = [];
-  TextEditingController searchController = TextEditingController();
-
+  final TextEditingController searchController = TextEditingController();
   bool isSearchEmpty = true;
 
   @override
@@ -40,9 +38,9 @@ class _MyHomePageState extends State<MyHomePage> {
     setNotesFromDB();
   }
 
-  setNotesFromDB() async {
-    print("Entered setNotes");
-    var fetchedNotes = await NotesDatabaseService.db.getNotesFromDB();
+  Future<void> setNotesFromDB() async {
+    debugPrint("Entered setNotes");
+    final fetchedNotes = await NotesDatabaseService.db.getNotesFromDB();
     setState(() {
       notesList = fetchedNotes;
     });
@@ -53,36 +51,37 @@ class _MyHomePageState extends State<MyHomePage> {
     return Scaffold(
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: Theme.of(context).primaryColor,
-        onPressed: () {
-          gotoEditNote();
-        },
-        label: Text('Add note'.toUpperCase()),
-        icon: Icon(Icons.add),
+        onPressed: gotoEditNote,
+        label: Text('ADD NOTE'),
+        icon: const Icon(Icons.add),
       ),
       body: GestureDetector(
-        onTap: () {
-          FocusScope.of(context).requestFocus(new FocusNode());
-        },
+        onTap: () => FocusScope.of(context).unfocus(),
         child: AnimatedContainer(
-          duration: Duration(milliseconds: 200),
+          duration: const Duration(milliseconds: 200),
+          margin: const EdgeInsets.only(top: 2),
+          padding: const EdgeInsets.symmetric(horizontal: 15),
           child: ListView(
-            physics: BouncingScrollPhysics(),
-            children: <Widget>[
+            physics: const BouncingScrollPhysics(),
+            children: [
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
-                children: <Widget>[
+                children: [
                   GestureDetector(
                     behavior: HitTestBehavior.opaque,
                     onTap: () {
                       Navigator.push(
-                          context,
-                          CupertinoPageRoute(
-                              builder: (context) => SettingsPage(
-                                  changeTheme: widget.changeTheme)));
+                        context,
+                        CupertinoPageRoute(
+                          builder: (context) => SettingsPage(
+                            changeTheme: widget.changeTheme,
+                          ),
+                        ),
+                      );
                     },
                     child: AnimatedContainer(
-                      duration: Duration(milliseconds: 200),
-                      padding: EdgeInsets.all(16),
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.all(16),
                       alignment: Alignment.centerRight,
                       child: Icon(
                         OMIcons.settings,
@@ -97,25 +96,26 @@ class _MyHomePageState extends State<MyHomePage> {
               buildHeaderWidget(context),
               buildButtonRow(),
               buildImportantIndicatorText(),
-              Container(height: 32),
+              const SizedBox(height: 32),
               ...buildNoteComponentsList(),
               GestureDetector(
-                  onTap: gotoEditNote, child: AddNoteCardComponent()),
-              Container(height: 100)
+                onTap: gotoEditNote,
+                child: const AddNoteCardComponent(),
+              ),
+              const SizedBox(height: 100),
             ],
           ),
-          margin: EdgeInsets.only(top: 2),
-          padding: EdgeInsets.only(left: 15, right: 15),
         ),
       ),
     );
   }
 
+  /// 🔹 Nút Flag + Search
   Widget buildButtonRow() {
     return Padding(
-      padding: const EdgeInsets.only(left: 10, right: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 10),
       child: Row(
-        children: <Widget>[
+        children: [
           GestureDetector(
             onTap: () {
               setState(() {
@@ -123,88 +123,89 @@ class _MyHomePageState extends State<MyHomePage> {
               });
             },
             child: AnimatedContainer(
-              duration: Duration(milliseconds: 160),
+              duration: const Duration(milliseconds: 160),
               height: 50,
               width: 50,
-              curve: Curves.slowMiddle,
+              curve: Curves.easeInOut,
+              decoration: BoxDecoration(
+                color: isFlagOn ? Colors.blue : Colors.transparent,
+                border: Border.all(
+                  width: isFlagOn ? 2 : 1,
+                  color:
+                  isFlagOn ? Colors.blue.shade700 : Colors.grey.shade300,
+                ),
+                borderRadius: BorderRadius.circular(16),
+              ),
               child: Icon(
                 isFlagOn ? Icons.flag : OMIcons.flag,
                 color: isFlagOn ? Colors.white : Colors.grey.shade300,
               ),
-              decoration: BoxDecoration(
-                  color: isFlagOn ? Colors.blue : Colors.transparent,
-                  border: Border.all(
-                    width: isFlagOn ? 2 : 1,
-                    color:
-                        isFlagOn ? Colors.blue.shade700 : Colors.grey.shade300,
-                  ),
-                  borderRadius: BorderRadius.all(Radius.circular(16))),
             ),
           ),
           Expanded(
             child: Container(
               alignment: Alignment.center,
-              margin: EdgeInsets.only(left: 8),
-              padding: EdgeInsets.only(left: 16),
+              margin: const EdgeInsets.only(left: 8),
+              padding: const EdgeInsets.only(left: 16),
               height: 50,
               decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey.shade300),
-                  borderRadius: BorderRadius.all(Radius.circular(16))),
+                border: Border.all(color: Colors.grey.shade300),
+                borderRadius: BorderRadius.circular(16),
+              ),
               child: Row(
-                mainAxisSize: MainAxisSize.max,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: <Widget>[
+                children: [
                   Expanded(
                     child: TextField(
                       controller: searchController,
                       maxLines: 1,
-                      onChanged: (value) {
-                        handleSearch(value);
-                      },
-                      autofocus: false,
-                      keyboardType: TextInputType.text,
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+                      onChanged: handleSearch,
                       textInputAction: TextInputAction.search,
                       decoration: InputDecoration.collapsed(
                         hintText: 'Search',
                         hintStyle: TextStyle(
-                            color: Colors.grey.shade300,
-                            fontSize: 18,
-                            fontWeight: FontWeight.w500),
-                        border: InputBorder.none,
+                          color: Colors.grey.shade400,
+                          fontSize: 16,
+                        ),
+                      ),
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ),
                   IconButton(
-                    icon: Icon(isSearchEmpty ? Icons.search : Icons.cancel,
-                        color: Colors.grey.shade300),
+                    icon: Icon(
+                      isSearchEmpty ? Icons.search : Icons.cancel,
+                      color: Colors.grey.shade400,
+                    ),
                     onPressed: cancelSearch,
                   ),
                 ],
               ),
             ),
-          )
+          ),
         ],
       ),
     );
   }
 
+  /// 🔹 Header “Your Notes”
   Widget buildHeaderWidget(BuildContext context) {
     return Row(
-      children: <Widget>[
+      children: [
         AnimatedContainer(
-          duration: Duration(milliseconds: 200),
+          duration: const Duration(milliseconds: 200),
           curve: Curves.easeIn,
-          margin: EdgeInsets.only(top: 8, bottom: 32, left: 10),
+          margin: const EdgeInsets.only(top: 8, bottom: 32, left: 10),
           width: headerShouldHide ? 0 : 200,
           child: Text(
             'Your Notes',
             style: TextStyle(
-                fontFamily: 'ZillaSlab',
-                fontWeight: FontWeight.w700,
-                fontSize: 36,
-                color: Theme.of(context).primaryColor),
+              fontFamily: 'ZillaSlab',
+              fontWeight: FontWeight.w700,
+              fontSize: 36,
+              color: Theme.of(context).primaryColor,
+            ),
             overflow: TextOverflow.clip,
             softWrap: false,
           ),
@@ -213,114 +214,95 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  Widget testListItem(Color color) {
-    return new NoteCardComponent(
-      noteData: NotesModel.random(),
-    );
-  }
-
+  /// 🔹 Hiển thị dòng thông báo “Only showing important notes”
   Widget buildImportantIndicatorText() {
     return AnimatedCrossFade(
-      duration: Duration(milliseconds: 200),
+      duration: const Duration(milliseconds: 200),
       firstChild: Padding(
         padding: const EdgeInsets.only(top: 8),
         child: Text(
-          'Only showing notes marked important'.toUpperCase(),
-          style: TextStyle(
-              fontSize: 12, color: Colors.blue, fontWeight: FontWeight.w500),
+          'ONLY SHOWING NOTES MARKED IMPORTANT',
+          style: const TextStyle(
+            fontSize: 12,
+            color: Colors.blue,
+            fontWeight: FontWeight.w500,
+          ),
         ),
       ),
-      secondChild: Container(
-        height: 2,
-      ),
+      secondChild: const SizedBox(height: 2),
       crossFadeState:
-          isFlagOn ? CrossFadeState.showFirst : CrossFadeState.showSecond,
+      isFlagOn ? CrossFadeState.showFirst : CrossFadeState.showSecond,
     );
   }
 
+  /// 🔹 Danh sách ghi chú
   List<Widget> buildNoteComponentsList() {
-    List<Widget> noteComponentsList = [];
-    notesList.sort((a, b) {
-      return b.date.compareTo(a.date);
+    final List<Widget> noteComponentsList = [];
+    notesList.sort((a, b) => b.date.compareTo(a.date));
+
+    final filteredNotes = notesList.where((note) {
+      if (searchController.text.isNotEmpty) {
+        final query = searchController.text.toLowerCase();
+        return note.title.toLowerCase().contains(query) ||
+            note.content.toLowerCase().contains(query);
+      }
+      if (isFlagOn) return note.isImportant;
+      return true;
     });
-    if (searchController.text.isNotEmpty) {
-      notesList.forEach((note) {
-        if (note.title
-                .toLowerCase()
-                .contains(searchController.text.toLowerCase()) ||
-            note.content
-                .toLowerCase()
-                .contains(searchController.text.toLowerCase()))
-          noteComponentsList.add(NoteCardComponent(
-            noteData: note,
-            onTapAction: openNoteToRead,
-          ));
-      });
-      return noteComponentsList;
-    }
-    if (isFlagOn) {
-      notesList.forEach((note) {
-        if (note.isImportant)
-          noteComponentsList.add(NoteCardComponent(
-            noteData: note,
-            onTapAction: openNoteToRead,
-          ));
-      });
-    } else {
-      notesList.forEach((note) {
-        noteComponentsList.add(NoteCardComponent(
+
+    for (final note in filteredNotes) {
+      noteComponentsList.add(
+        NoteCardComponent(
           noteData: note,
           onTapAction: openNoteToRead,
-        ));
-      });
+        ),
+      );
     }
+
     return noteComponentsList;
   }
 
+  /// 🔹 Tìm kiếm
   void handleSearch(String value) {
-    if (value.isNotEmpty) {
-      setState(() {
-        isSearchEmpty = false;
-      });
-    } else {
-      setState(() {
-        isSearchEmpty = true;
-      });
-    }
+    setState(() => isSearchEmpty = value.isEmpty);
   }
 
+  /// 🔹 Chuyển đến trang tạo note
   void gotoEditNote() {
     Navigator.push(
-        context,
-        CupertinoPageRoute(
-            builder: (context) =>
-                EditNotePage(triggerRefetch: refetchNotesFromDB)));
+      context,
+      CupertinoPageRoute(
+        builder: (context) =>
+            EditNotePage(triggerRefetch: refetchNotesFromDB),
+      ),
+    );
   }
 
-  void refetchNotesFromDB() async {
+  /// 🔹 Tải lại notes sau khi chỉnh sửa
+  Future<void> refetchNotesFromDB() async {
     await setNotesFromDB();
-    print("Refetched notes");
+    debugPrint("Refetched notes");
   }
 
-  openNoteToRead(NotesModel noteData) async {
-    setState(() {
-      headerShouldHide = true;
-    });
-    await Future.delayed(Duration(milliseconds: 230), () {});
-    Navigator.push(
-        context,
-        FadeRoute(
-            page: ViewNotePage(
-                triggerRefetch: refetchNotesFromDB, currentNote: noteData)));
-    await Future.delayed(Duration(milliseconds: 300), () {});
-
-    setState(() {
-      headerShouldHide = false;
-    });
+  /// 🔹 Mở note để đọc
+  Future<void> openNoteToRead(NotesModel noteData) async {
+    setState(() => headerShouldHide = true);
+    await Future.delayed(const Duration(milliseconds: 230));
+    await Navigator.push(
+      context,
+      FadeRoute(
+        page: ViewNotePage(
+          triggerRefetch: refetchNotesFromDB,
+          currentNote: noteData,
+        ),
+      ),
+    );
+    setState(() => headerShouldHide = false);
   }
 
+  /// 🔹 Hủy tìm kiếm
   void cancelSearch() {
-    FocusScope.of(context).requestFocus(new FocusNode());
+    FocusScope.of(context).unfocus();
     setState(() {
       searchController.clear();
       isSearchEmpty = true;

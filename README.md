@@ -18,12 +18,6 @@
 - shared_preferences: ^0.5.3+1
 - share: ^0.6.1+1
 
-## Run the project
-
-- With Flutter installed, clone project and run `flutter run --release` in that directory,
-  or
-- Download the built APK from [here](https://github.com/roshanrahman/flutter-notes-app/raw/master/github_assets/draft.apk)
-
 ## Screenshots
 
 <img src="github_assets/edit.gif" height="800">

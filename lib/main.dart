@@ -1,51 +1,63 @@
 import 'package:flutter/material.dart';
-import 'package:notes/services/sharedPref.dart';
+import 'package:flutter_notes_app/services/theme_preference.dart';
 import 'screens/home.dart';
 import 'data/theme.dart';
 
-void main() => runApp(MyApp());
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(const MyApp());
+}
+
 
 class MyApp extends StatefulWidget {
-  // This widget is the root of your application.
+  const MyApp({super.key});
+
   @override
-  _MyAppState createState() => _MyAppState();
+  State<MyApp> createState() => _MyAppState();
 }
 
 class _MyAppState extends State<MyApp> {
   ThemeData theme = appThemeLight;
+
   @override
   void initState() {
     super.initState();
-    updateThemeFromSharedPref();
+    _updateThemeFromSharedPref();
   }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      debugShowCheckedModeBanner: false,
+      title: 'Notes App',
       theme: theme,
-      home: MyHomePage(title: 'Home', changeTheme: setTheme),
+      home: MyHomePage(
+        title: 'My Notes',
+        changeTheme: _setTheme,
+      ),
     );
   }
 
-  setTheme(Brightness brightness) {
+  void _setTheme(Brightness brightness) {
     if (brightness == Brightness.dark) {
       setState(() {
         theme = appThemeDark;
       });
+      ThemePreference.setTheme('dark');
     } else {
       setState(() {
         theme = appThemeLight;
       });
+      ThemePreference.setTheme('light');
     }
   }
 
-  void updateThemeFromSharedPref() async {
-    String themeText = await getThemeFromSharedPref();
-    if (themeText == 'light') {
-      setTheme(Brightness.light);
+  Future<void> _updateThemeFromSharedPref() async {
+    final themeText = await ThemePreference.getTheme();
+    if (themeText == 'dark') {
+      _setTheme(Brightness.dark);
     } else {
-      setTheme(Brightness.dark);
+      _setTheme(Brightness.light);
     }
   }
 }
