@@ -74,4 +74,3 @@ dependencies:
 ## Screenshots
 
 <img src="github_assets/edit.gif" height="800">
-<img src="github_assets/dark.gif" height="800">
